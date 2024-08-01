@@ -10,15 +10,6 @@ class RegisterForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput())
     confirm_password = forms.CharField(widget=forms.PasswordInput())
 
-    # def clean_password(self):
-    #     password = self.cleaned_data.get("password")
-    #     if password:
-    #         try:
-    #             password_validation.validate_password(password, self.instance)
-    #         except ValidationError as error:
-    #             self.add_error("password", error)
-    #     return password
-
     class Meta:
         model = Users
         fields = (
@@ -64,18 +55,7 @@ class LoginForm(forms.Form):
     username = forms.CharField()
     password = forms.CharField(widget=forms.PasswordInput())
 
-    def clean_password(self):
-        try:
-            user = Users.objects.get(username=self.cleaned_data.get("username"))
-            # if not user.check_password(raw_password=value):
-            #     user.login_try_count=+1
-            # else:
-            #     user.login_try_count=0
-            # user.save()
-            #
-        except Users.DoesNotExist:
-            return self.cleaned_data.get("password")
-        return self.cleaned_data.get("password")
+
 
 
 class BookshelfForm(forms.ModelForm):
@@ -88,3 +68,7 @@ class UserUpdateForm(ModelForm):
     class Meta:
         model = Users
         fields = ("first_name", "last_name", "middle_name", "email", "avatar", "username",)
+
+class UserDeleteForm(forms.Form):
+    SELECTION_CHOICES = [('Yes', 'Yes'), ('No', 'No')]
+    delete = forms.ChoiceField(choices=SELECTION_CHOICES, widget=forms.RadioSelect)

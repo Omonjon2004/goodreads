@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %} Register {% endblock %}
+
+{% block content %}
+    <div class="row" >
+    <div class="col-6">
+    <h3>Register Page</h3>
+    <form action="{% url 'book:register' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+           {{ form|crispy}}`
+               <p>Do you have already account? Than  <button type="submit" class="btn btn-light">
+                   <a href="{% url 'book:login' %}" style="text-decoration: none">login</a>
+               </button>
+               </p>
+        <button type="submit"> Register</button>
+        </form>
+      </div>
+    </div>
+{% endblock %}
+
+
+
+

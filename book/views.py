@@ -6,7 +6,7 @@ from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, UpdateView, DetailView, DeleteView
 
-from book.forms import RegisterForm, LoginForm, BookshelfForm, UserUpdateForm
+from book.forms import RegisterForm, LoginForm, BookshelfForm, UserUpdateForm, UserDeleteForm
 from book.models import Users, Book, Bookshelf
 
 
@@ -16,7 +16,7 @@ class RegisterView(View):
         context = {
             "form": form
         }
-        return render(request, "book/register.html", context=context)
+        return render(request, "auth/register.html", context=context)
 
     def post(self, request):
         form = RegisterForm(data=request.POST, files=request.FILES)
@@ -30,7 +30,7 @@ class RegisterView(View):
             context = {
                 "form": form
             }
-            return render(request, "book/register.html", context=context)
+            return render(request, "auth/register.html", context=context)
 
 
 class LoginView(View):
@@ -39,7 +39,7 @@ class LoginView(View):
         context = {
             "form": form
         }
-        return render(request, "book/login.html", context=context)
+        return render(request, "auth/login.html", context=context)
 
     def post(self, request):
         form = LoginForm(data=request.POST)
@@ -47,25 +47,54 @@ class LoginView(View):
             user = authenticate(request, username=form.cleaned_data["username"], password=form.cleaned_data["password"])
             if user is not None:
                 login(request, user)
-                messages.info(request, f"You are now logged in as {user.username}.")
+                user.login_try_count =0
+                user.save()
+                messages.success(request, f"You are now logged in as {user.username}.")
                 return redirect("home")
             else:
-                messages.warning(request, "With given data user not found")
-                return redirect("home")
+                try:
+                    user = Users.objects.get(username=form.cleaned_data["username"])
+                    user.login_try_count += 1
+                    user.save()
+                except Users.DoesNotExist:
+                    pass
+                messages.warning(request, "Invalid username or password.")
+                return redirect("book:login")
+
+
 
 
 class LogoutView(LoginRequiredMixin, View):
     def get(self, request):
         logout(request)
+        messages.success(request, "You are now logged out.")
         return redirect("home")
 
+
+
+class UserDeleteView(LoginRequiredMixin, View):
+    def get(self, request):
+        form = UserDeleteForm()
+        return render(request, 'user/user_delete.html', {'form': form})
+
+    def post(self, request):
+        form = UserDeleteForm(request.POST)
+        if form.is_valid():
+            choice = form.cleaned_data.get('delete')
+            if choice == 'Yes':
+                user = request.user
+                user.delete()
+                return redirect(reverse_lazy('home'))
+            else:
+                return redirect(reverse_lazy('home'))
+        return render(request, 'user/user_delete.html', {'form': form})
 
 class UserProfileView(LoginRequiredMixin, View):
     def get(self, request):
         context = {
             "user": request.user
         }
-        return render(request, "book/profile.html", context=context)
+        return render(request, "user/profile.html", context=context)
 
 
 class UserUpdateProfileView(LoginRequiredMixin, View):
@@ -75,7 +104,7 @@ class UserUpdateProfileView(LoginRequiredMixin, View):
         context = {
             "form": form
         }
-        return render(request, "book/user-profile-update.html", context=context)
+        return render(request, "user/user-profile-update.html", context=context)
 
     def post(self, request):
         form = UserUpdateForm(data=request.POST, files=request.FILES, instance=request.user)
@@ -87,7 +116,7 @@ class UserUpdateProfileView(LoginRequiredMixin, View):
             context = {
                 "form": form
             }
-            return render(request, "book/user-profile-update.html", context=context)
+            return render(request, "user/user-profile-update.html", context=context)
 
 
 class MyBookView(View, LoginRequiredMixin):

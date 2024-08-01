@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %} Delete User {% endblock %}
+{% block content %}
+{% include 'category.html' %}    
+    <h2>Are you sure you want to delete your account?</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{form|crispy}}
+        <button type="submit">Submit</button>
+    </form>
+{% endblock %}
